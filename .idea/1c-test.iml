@@ -105,6 +105,9 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/mavsan/laravel-1c-protocol" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/madnest/madzipper" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/psr/clock" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/carono/commerceml" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/bigperson/laravel-exchange1c" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/bigperson/exchange1c" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

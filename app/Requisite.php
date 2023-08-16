@@ -4,12 +4,15 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Category extends Model
+class Requisite extends Model
 {
+
     protected $guarded = ['id'];
+    public $timestamps = false;
 
     public function products()
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsToMany(Product::class)->withPivot('value');
     }
+
 }
