@@ -10,6 +10,7 @@
 declare(strict_types=1);
 
 use App\Category;
+use App\Group;
 use App\Product;
 use Illuminate\Support\Facades\Log;
 
@@ -28,14 +29,14 @@ return [
     'log_channel' => 'daily',
     'queue'       => 'default',
     'auth'        => [
-        'custom'   => false,
+        'custom'   => true,
         'callback' => function ($name, $password) {
             if ($name == 'admin' && $password == 'admin') {
-                Log::notice('Check user password done');
+                Log::info('Check user password done');
                 return true;
             }
 
-            Log::critical('Check user password false');
+            Log::info('Check user password false');
             return false;
         },
     ],
