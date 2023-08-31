@@ -29,7 +29,8 @@ class Category extends Model implements GroupInterface
                 $category = Category::query()->create(
                     [
                         'name' => $group->name,
-                        'parent_id' => $parent
+                        'parent_id' => $parent,
+                        'accounting_id' => $group->id
                     ]
                 );
             }
