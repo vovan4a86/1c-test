@@ -37,6 +37,11 @@ class Product extends Model implements ProductInterface
         return $this->belongsTo(Group::class);
     }
 
+    public function offers()
+    {
+        return $this->hasMany(Offer::class);
+    }
+
     //1c now
 
     /**
@@ -220,7 +225,7 @@ class Product extends Model implements ProductInterface
      */
     public function getOffer1c($offer)
     {
-        // TODO: Implement getOffer1c() method.
+        Log::info('offer: ' . $offer->name);
     }
 
     /**

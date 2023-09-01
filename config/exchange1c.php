@@ -24,7 +24,7 @@ return [
     'models'        => [
         \Bigperson\Exchange1C\Interfaces\GroupInterface::class   => Category::class,
         \Bigperson\Exchange1C\Interfaces\ProductInterface::class => Product::class,
-//        \Bigperson\Exchange1C\Interfaces\OfferInterface::class   => \App\Models\Offer::class,
+        \Bigperson\Exchange1C\Interfaces\OfferInterface::class   => \App\Models\Offer::class,
     ],
     'log_channel' => 'daily',
     'queue'       => 'default',
