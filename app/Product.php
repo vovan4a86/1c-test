@@ -5,9 +5,14 @@ namespace App;
 use Bigperson\Exchange1C\Interfaces\GroupInterface;
 use Bigperson\Exchange1C\Interfaces\OfferInterface;
 use Bigperson\Exchange1C\Interfaces\ProductInterface;
-use Zenwalker\CommerceML\Model\Property;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property Builder[]|Collection|mixed category_id
+ */
 class Product extends Model implements ProductInterface
 {
     protected $guarded = ['id'];
@@ -41,7 +46,7 @@ class Product extends Model implements ProductInterface
      */
     public static function getIdFieldName1c(): string
     {
-        return '1c_product_id';
+        return 'accounting_id';
     }
 
     /**
@@ -59,14 +64,14 @@ class Product extends Model implements ProductInterface
      * не попадают в парсер, в самом конце вызывается данный метод, в $product и $cml можно получить все
      * возможные данные для ручного парсинга.
      *
-     * @param \Zenwalker\CommerceML\CommerceML    $cml
+     * @param \Zenwalker\CommerceML\CommerceML $cml
      * @param \Zenwalker\CommerceML\Model\Product $product
      *
      * @return void
      */
     public function setRaw1cData($cml, $product)
     {
-        // TODO: Implement setRaw1cData() method.
+        Log::info($product->name);
     }
 
     /**
@@ -81,13 +86,14 @@ class Product extends Model implements ProductInterface
      */
     public function setRequisite1c($name, $value)
     {
-        if (!$requisite = Requisite::query()->where('name',$name)->first()) {
+        if (!$requisite = Requisite::query()->where('name', $name)->first()) {
             $requisite = new Requisite();
             $requisite->name = $name;
             $requisite->save();
         }
 
-        $this->requisites()->updateExistingPivot($requisite->id, ['value' => $value]);
+        $this->requisites()->attach($requisite->id, ['value' => $value]);
+//        $this->requisites()->updateExistingPivot($requisite->id, ['value' => $value]);
     }
 
     /**
@@ -99,8 +105,8 @@ class Product extends Model implements ProductInterface
      */
     public function setGroup1c($group)
     {
-        $id = Group::query()->where('accounting_id', $group->id)->get(['id']);
-        $this->group_id = $id;
+        $id = Category::query()->where('accounting_id', $group->Ид)->get(['id']);
+        $this->category_id = $id;
     }
 
     /**
@@ -121,14 +127,24 @@ class Product extends Model implements ProductInterface
     {
         $propertyModel = Property::query()->where('accounting_id', $property->id)->first();
         $propertyValue = $property->getValueModel();
-        if ($propertyAccountingId = (string)$propertyValue->ИдЗначения) {
-            $value = PropertyValue::query()->where('accounting_id', $propertyAccountingId);
-            $attributes = ['property_value_id' => $value->id];
-        } else {
-            $attributes = ['value' => $propertyValue->value];
-        }
 
-        $this->properties()->updateExistingPivot($propertyModel->id, $attributes);
+        if ($propertyAccountingId = (string)$propertyValue->ИдЗначения) {
+            $value = PropertyValue::query()->where('accounting_id', $propertyAccountingId)->first();
+            $attributes = ['property_value_id' => $value->id];
+            $this->properties()->attach($propertyModel->id, $attributes);
+
+//            $this->properties()->updateExistingPivot($propertyModel->id, $attributes);
+        }
+//        else {
+//            $value = Property::query()->create([
+//                'property_id' => $propertyModel->id,
+//                'name' => $propertyValue->Значение,
+//                'accounting_id' => ''
+//            ]);
+//            $attributes = ['value' => $propertyValue->Значение];
+//        }
+
+
     }
 
     /**
@@ -148,15 +164,24 @@ class Product extends Model implements ProductInterface
          * @var \Zenwalker\CommerceML\Model\Property $property
          */
         foreach ($properties as $property) {
-            $propertyModel = Property::createByMl($property);
-            foreach ($property->getAvailableValues() as $value) {
-                if (!$propertyValue = PropertyValue::query()->where('accounting_id', $value->id)) {
-                    $propertyValue = new PropertyValue();
-                    $propertyValue->name = (string)$value->Значение;
-                    $propertyValue->property_id = $propertyModel->id;
-                    $propertyValue->accounting_id = (string)$value->ИдЗначения;
-                    $propertyValue->save();
-                    unset($propertyValue);
+            $propertyModel = Property::query()->where('accounting_id', $property->id)->first();
+            if (!$propertyModel) {
+                $propertyModel = Property::query()->create(
+                    [
+                        'name' => $property->name,
+                        'accounting_id' => $property->id
+                    ]
+                );
+            }
+
+            foreach ($property->getAvailableValues() as $i => $value) {
+                $propertyValue = PropertyValue::query()->where('accounting_id', $value->ИдЗначения)->first();
+                if (!$propertyValue) {
+                    PropertyValue::query()->create([
+                        'name' => $value->Значение,
+                        'property_id' => $propertyModel->id,
+                        'accounting_id' => $value->ИдЗначения
+                    ]);
                 }
             }
         }
@@ -203,9 +228,19 @@ class Product extends Model implements ProductInterface
      *
      * @return self
      */
-    public static function createModel1c(\Zenwalker\CommerceML\Model\Product $product)
+    public static function createModel1c($product): Product
     {
-        // TODO: Implement createModel1c() method.
+        $model = Product::query()->where('accounting_id', $product->id)->first();
+        $category = Category::query()->where('accounting_id', $product->group->Ид)->first();
+        if (!$model) {
+            $model = Product::query()->create([
+                'name' => $product->name,
+                'accounting_id' => $product->id,
+                'category_id' => $category->id,
+            ]);
+        }
+        $model->text = (string)$product->Артикул;
+        return $model;
     }
 
     /**
